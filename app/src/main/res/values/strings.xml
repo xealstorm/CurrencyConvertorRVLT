@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Currency Rates</string>
+    <string name="app_name">Rates</string>
+    <string name="rate_format">%.2f</string>
 </resources>
