@@ -52,6 +52,14 @@ class RatesFragment : BaseFragment(), RatesView {
     }
 
     fun initRecyclerView() {
+        adapter.setOnItemClickListener(object : OnItemClickListener<CurrencyItem> {
+            override fun onItemClicked(item: CurrencyItem) {
+                Handler().postDelayed(
+                    { binding.ratesViewGroup.smoothScrollToPosition(0) },
+                    DELAY_MILLLIS
+                )
+            }
+        })
         with(binding.ratesViewGroup) {
             setHasFixedSize(true)
             setItemAnimator(DefaultItemAnimator())
@@ -77,6 +85,8 @@ class RatesFragment : BaseFragment(), RatesView {
     }
 
     companion object {
+        private val DELAY_MILLLIS = 200L
+
         fun newInstance(): RatesFragment {
             val fragment = RatesFragment()
             fragment.retainInstance = true

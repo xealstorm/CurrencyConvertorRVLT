@@ -4,8 +4,10 @@ import android.view.LayoutInflater
 import androidx.databinding.DataBindingUtil
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.android.challengervlt.R
+import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.databinding.RowItemBinding
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseAdapter
@@ -13,16 +15,34 @@ import com.android.challengervlt.ui.base.view.BaseAdapter
 class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<CurrencyItem>()) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>(), BaseAdapter<CurrencyItem> {
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val viewModel = data[position]
+    private var clickListener: OnItemClickListener<CurrencyItem>? = null
 
-        (holder as ItemViewHolder).binding.currencyCode.text = viewModel.code
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val currencyitem = data[position]
+
+        (holder as ItemViewHolder).binding.currencyCode.text = currencyitem.code
         holder.binding.valueInput.text =
             String.format(
                 holder.binding.root.context.getString(R.string.rate_format),
-                viewModel.rateValue
+                currencyitem.rateValue
             )
-        holder.binding.currencyName.text = viewModel.title
+        holder.binding.currencyName.text = currencyitem.title
+        holder.binding.root.setOnClickListener {
+            swapOnClick()
+        }
+    }
+
+    private fun swapOnClick(currencyitem: CurrencyItem) {
+        val currentPosition = data.indexOf(currencyitem)
+        data.swap(currentPosition, 0)
+        notifyItemMoved(currentPosition, 0)
+        if (clickListener != null) {
+            clickListener!!.onItemClicked(currencyitem)
+        }
+    }
+
+    fun setOnItemClickListener(clickListener: OnItemClickListener<CurrencyItem>) {
+        this.clickListener = clickListener
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -47,6 +67,19 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
             data.add(model)
         } else {
             data[index] = model
+        }
+    }
+
+    inline fun <reified T> MutableList<T>.swap(sourceIndex: Int, destinationIndex: Int) {
+        if (sourceIndex != destinationIndex && sourceIndex >= 0 && destinationIndex >= 0) {
+            val datum = this[sourceIndex]
+            if (sourceIndex < destinationIndex) {
+                this.add(destinationIndex, datum)
+                this.removeAt(sourceIndex)
+            } else {
+                this.removeAt(sourceIndex)
+                this.add(destinationIndex, datum)
+            }
         }
     }
 
