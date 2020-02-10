@@ -6,5 +6,7 @@ import com.android.challengervlt.ui.base.presenter.BasePresenter
 import com.android.challengervlt.ui.list.view.RatesView
 
 interface RatesPresenter : BasePresenter<RatesView> {
-    fun generateList()
+    fun updateList(items: List<CurrencyItem>)
+
+    fun loadItems(baseCurrency: String? = null)
 }

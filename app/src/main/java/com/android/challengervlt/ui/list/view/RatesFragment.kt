@@ -7,11 +7,13 @@ import com.android.challengervlt.databinding.FragmentItemsListBinding
 import com.android.challengervlt.di.ActivityComponent
 import com.android.challengervlt.di.RatesModule
 import com.android.challengervlt.ui.base.view.BaseFragment
+import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
 import javax.inject.Inject
 import android.view.*
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.DividerItemDecoration
 import com.android.challengervlt.model.CurrencyItem
 
 
@@ -33,7 +35,7 @@ class RatesFragment : BaseFragment(), RatesView {
         savedInstanceState: Bundle?
     ): View? {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_items_list, container, false)
-        return binding.getRoot()
+        return binding.root
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -44,20 +46,21 @@ class RatesFragment : BaseFragment(), RatesView {
 
     override fun onResume() {
         super.onResume()
-        presenter.generateList()
+        presenter.loadItems()
     }
 
     override fun doInjections(activityComponent: ActivityComponent) {
         activityComponent.plus(RatesModule()).injectTo(this)
     }
 
-    fun initRecyclerView() {
+    private fun initRecyclerView() {
         adapter.setOnItemClickListener(object : OnItemClickListener<CurrencyItem> {
             override fun onItemClicked(item: CurrencyItem) {
                 Handler().postDelayed(
                     { binding.ratesViewGroup.smoothScrollToPosition(0) },
                     DELAY_MILLLIS
                 )
+                presenter.loadItems(item.code)
             }
         })
         with(binding.ratesViewGroup) {
@@ -66,9 +69,9 @@ class RatesFragment : BaseFragment(), RatesView {
             setLayoutManager(LinearLayoutManager(activity))
             setAdapter(this@RatesFragment.adapter)
             addItemDecoration(
-                androidx.recyclerview.widget.DividerItemDecoration(
+                DividerItemDecoration(
                     context,
-                    androidx.recyclerview.widget.DividerItemDecoration.VERTICAL
+                    DividerItemDecoration.VERTICAL
                 )
             )
         }

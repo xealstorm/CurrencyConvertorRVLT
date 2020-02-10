@@ -20,11 +20,13 @@ android {
     buildTypes {
         debug {
             buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
+            buildConfigField "String", "RATES_URL", "\"https://revolut.duckdns.org/\""
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
+            buildConfigField "String", "RATES_URL", "\"https://revolut.duckdns.org/\""
         }
     }
     dataBinding {
@@ -49,6 +51,14 @@ dependencies {
 
     implementation 'com.squareup.picasso:picasso:2.5.2'
     implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
+
+    implementation 'com.squareup.retrofit:retrofit:1.9.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.5.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.12.1'
+
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.9'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

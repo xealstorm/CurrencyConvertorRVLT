@@ -21,15 +21,15 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     private var clickListener: OnItemClickListener<CurrencyItem>? = null
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val currencyitem = data[position]
+        val currencyItem = data[position]
 
-        (holder as ItemViewHolder).binding.currencyCode.text = currencyitem.code
+        (holder as ItemViewHolder).binding.currencyCode.text = currencyItem.code
         holder.binding.valueInput.text =
             String.format(
                 holder.binding.root.context.getString(R.string.rate_format),
-                currencyitem.rateValue
+                currencyItem.rateValue
             )
-        holder.binding.currencyName.text = currencyitem.title
+        holder.binding.currencyName.text = currencyItem.title
         holder.binding.root.setOnClickListener {
             swapOnClick(currencyItem)
         }
