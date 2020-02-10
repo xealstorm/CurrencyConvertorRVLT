@@ -18,9 +18,13 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
+        debug {
+            buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
         }
     }
     dataBinding {
@@ -42,6 +46,9 @@ dependencies {
     implementation "com.google.dagger:dagger-android:2.18"
     kapt "com.google.dagger:dagger-compiler:2.18"
     kapt "com.google.dagger:dagger-android-processor:2.18"
+
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+    implementation 'com.jakewharton.picasso:picasso2-okhttp3-downloader:1.1.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

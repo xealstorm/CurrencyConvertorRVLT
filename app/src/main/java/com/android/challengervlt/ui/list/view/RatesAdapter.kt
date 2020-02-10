@@ -4,13 +4,16 @@ import android.view.LayoutInflater
 import androidx.databinding.DataBindingUtil
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.android.challengecoup.util.ui.CircleTransform
+import com.android.challengervlt.BuildConfig
 import com.android.challengervlt.R
 import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.databinding.RowItemBinding
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseAdapter
+
+import com.squareup.picasso.Picasso
 
 class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<CurrencyItem>()) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>(), BaseAdapter<CurrencyItem> {
@@ -28,8 +31,18 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
             )
         holder.binding.currencyName.text = currencyitem.title
         holder.binding.root.setOnClickListener {
-            swapOnClick()
+            swapOnClick(currencyItem)
         }
+        Picasso
+            .with(holder.binding.root.context)
+            .load(
+                String.format(
+                    BuildConfig.FLAGS_URL,
+                    currencyItem.countryCode.toLowerCase()
+                )
+            )
+            .transform(CircleTransform())
+            .into(holder.binding.currencyIcon)
     }
 
     private fun swapOnClick(currencyitem: CurrencyItem) {
