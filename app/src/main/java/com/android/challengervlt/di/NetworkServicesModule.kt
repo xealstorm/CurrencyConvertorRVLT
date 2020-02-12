@@ -21,13 +21,6 @@ class NetworkServicesModule(private var baseUrl: String) {
 
     @Provides
     @Singleton
-    fun provideHttpCache(application: App): Cache {
-        val cacheSize = 10 * 1024 * 1024
-        return Cache(application.cacheDir, cacheSize.toLong())
-    }
-
-    @Provides
-    @Singleton
     fun provideGson(): Gson {
         val gsonBuilder = GsonBuilder()
         gsonBuilder.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
@@ -45,11 +38,9 @@ class NetworkServicesModule(private var baseUrl: String) {
     @Provides
     @Singleton
     fun provideOkhttpClient(
-        cache: Cache,
         httpLoggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         val client = OkHttpClient.Builder()
-            .cache(cache)
             .addInterceptor(httpLoggingInterceptor)
         return client.build()
     }

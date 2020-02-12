@@ -60,6 +60,7 @@ class RatesFragment : BaseFragment(), RatesView {
             override fun onItemClicked(item: CurrencyItem) {
                 if (binding.ratesViewGroup.layoutManager?.isSmoothScrolling == false) {
                     adapter.swapOnClick(item)
+                    scrollToTop()
                     presenter.loadItems(item.code)
                 }
             }
@@ -67,11 +68,9 @@ class RatesFragment : BaseFragment(), RatesView {
         with(binding.ratesViewGroup) {
             this@RatesFragment.adapter.setHasStableIds(true)
             setHasFixedSize(true)
-            itemAnimator = object : DefaultItemAnimator() {
-                override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
-                    scrollToTop()
-                }
-            }
+            val itemAnimator = DefaultItemAnimator()
+            itemAnimator.supportsChangeAnimations = false
+            this.itemAnimator = itemAnimator
             layoutManager = LinearLayoutManager(activity)
             adapter = this@RatesFragment.adapter
             addItemDecoration(
@@ -82,7 +81,6 @@ class RatesFragment : BaseFragment(), RatesView {
 
     override fun updateItems(items: List<CurrencyItem>) {
         items.forEach { adapter.addItem(it) }
-        adapter.notifyDataSetChanged()
     }
 
     override fun resetList() {
@@ -112,7 +110,10 @@ class RatesFragment : BaseFragment(), RatesView {
     }
 
     private fun expandAppBarWhenOnScrolledToTop() {
+        (activity as MainActivity?)?.expandAppBar()
     }
+
+    companion object {
         fun newInstance(): RatesFragment {
             val fragment = RatesFragment()
             fragment.retainInstance = true

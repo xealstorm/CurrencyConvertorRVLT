@@ -74,8 +74,10 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
         val index = data.indexOfFirst { it.code.equals(model.code) }
         if (index < 0) {
             data.add(model)
-        } else {
-            data[index] = model
+            notifyItemInserted(itemCount)
+        } else if (data[index] != model) {
+            data[index].rateValue = model.rateValue
+            notifyItemChanged(index)
         }
     }
 

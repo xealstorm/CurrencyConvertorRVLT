@@ -7,15 +7,18 @@ import com.android.challengervlt.util.log.L
 import com.android.challengervlt.ui.list.view.RatesView
 
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
-    private val networkService: NetworkService
     private val networkService: NetworkService,
     private val itemsRepository: CurrencyRepository
 ) : RatesPresenter {
     private var view: RatesView? = null
     private var currentBaseCurrency: String = DEFAULT_BASE_CURRENCY
+
+    private var subscribtion: Disposable? = null
 
     override fun setView(view: RatesView) {
         this.view = view
@@ -50,7 +53,9 @@ class RatesPresenterImpl(
     }
 
     private fun loadRates(baseCurrency: String) {
-        networkService.getRates(baseCurrency)
+        subscribtion?.dispose()
+        subscribtion = networkService.getRates(baseCurrency)
+            .repeatWhen { completed -> completed.delay(1, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .map { rates ->
