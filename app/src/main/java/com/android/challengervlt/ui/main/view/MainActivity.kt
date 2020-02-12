@@ -28,4 +28,8 @@ class MainActivity : BaseActivity() {
     override fun doInjections(activityComponent: ActivityComponent?) {
         activityComponent?.injectTo(this)
     }
+
+    fun expandAppBar() {
+        binding.appBar.setExpanded(true, true)
+    }
 }

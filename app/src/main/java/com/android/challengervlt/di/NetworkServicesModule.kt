@@ -23,7 +23,7 @@ class NetworkServicesModule(private var baseUrl: String) {
     @Singleton
     fun provideHttpCache(application: App): Cache {
         val cacheSize = 10 * 1024 * 1024
-        return Cache(application.getCacheDir(), cacheSize.toLong())
+        return Cache(application.cacheDir, cacheSize.toLong())
     }
 
     @Provides

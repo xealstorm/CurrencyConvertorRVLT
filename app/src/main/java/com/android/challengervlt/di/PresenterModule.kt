@@ -1,5 +1,6 @@
 package com.android.challengervlt.di
 
+import com.android.challengervlt.data.CurrencyRepository
 import com.android.challengervlt.network.NetworkService
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
 import com.android.challengervlt.ui.list.presenter.RatesPresenterImpl
@@ -11,10 +12,10 @@ class PresenterModule {
     @Provides
     @ActivityScope
     fun provideRatesPresenter(
-        networkService: NetworkService
+        networkService: NetworkService, currencyRepository: CurrencyRepository
     ): RatesPresenter {
         return RatesPresenterImpl(
-            networkService
+            networkService, currencyRepository
             )
     }
 }

@@ -1,11 +1,8 @@
 apply plugin: 'com.android.application'
-
 apply plugin: 'kotlin-android'
-
 apply plugin: 'kotlin-android-extensions'
-
 apply plugin: 'kotlin-kapt'
-
+apply plugin: 'realm-android'
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
@@ -21,12 +18,14 @@ android {
         debug {
             buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
             buildConfigField "String", "RATES_URL", "\"https://revolut.duckdns.org/\""
+            buildConfigField "String", "CURRENCY_URL", "\"https://openexchangerates.org/api/currencies.json\""
         }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             buildConfigField "String", "FLAGS_URL", "\"https://raw.githubusercontent.com/hjnilsson/country-flags/master/png100px/%s.png\""
             buildConfigField "String", "RATES_URL", "\"https://revolut.duckdns.org/\""
+            buildConfigField "String", "CURRENCY_URL", "\"https://openexchangerates.org/api/currencies.json\""
         }
     }
     dataBinding {
@@ -59,6 +58,9 @@ dependencies {
 
     implementation 'io.reactivex.rxjava2:rxjava:2.1.9'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+
+    implementation 'com.facebook.stetho:stetho:1.5.1'
+    implementation 'com.uphyca:stetho_realm:2.3.0'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'

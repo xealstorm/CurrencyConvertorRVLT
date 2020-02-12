@@ -1,20 +1,22 @@
 package com.android.challengervlt.ui.list.view
 
-import androidx.databinding.DataBindingUtil
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.*
+import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import com.android.challengervlt.R
 import com.android.challengervlt.databinding.FragmentItemsListBinding
 import com.android.challengervlt.di.ActivityComponent
 import com.android.challengervlt.di.RatesModule
+import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseFragment
 import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
+import com.android.challengervlt.ui.main.view.MainActivity
 import javax.inject.Inject
-import android.view.*
-import androidx.recyclerview.widget.DefaultItemAnimator
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.DividerItemDecoration
-import com.android.challengervlt.model.CurrencyItem
 
 
 class RatesFragment : BaseFragment(), RatesView {
@@ -54,25 +56,26 @@ class RatesFragment : BaseFragment(), RatesView {
     }
 
     private fun initRecyclerView() {
-        adapter.setOnItemClickListener(object : OnItemClickListener<CurrencyItem> {
+        adapter.clickListener = object : OnItemClickListener<CurrencyItem> {
             override fun onItemClicked(item: CurrencyItem) {
-                Handler().postDelayed(
-                    { binding.ratesViewGroup.smoothScrollToPosition(0) },
-                    DELAY_MILLLIS
-                )
-                presenter.loadItems(item.code)
+                if (binding.ratesViewGroup.layoutManager?.isSmoothScrolling == false) {
+                    adapter.swapOnClick(item)
+                    presenter.loadItems(item.code)
+                }
             }
-        })
+        }
         with(binding.ratesViewGroup) {
+            this@RatesFragment.adapter.setHasStableIds(true)
             setHasFixedSize(true)
-            setItemAnimator(DefaultItemAnimator())
-            setLayoutManager(LinearLayoutManager(activity))
-            setAdapter(this@RatesFragment.adapter)
+            itemAnimator = object : DefaultItemAnimator() {
+                override fun onAnimationFinished(viewHolder: RecyclerView.ViewHolder) {
+                    scrollToTop()
+                }
+            }
+            layoutManager = LinearLayoutManager(activity)
+            adapter = this@RatesFragment.adapter
             addItemDecoration(
-                DividerItemDecoration(
-                    context,
-                    DividerItemDecoration.VERTICAL
-                )
+                DividerItemDecoration(context, DividerItemDecoration.VERTICAL)
             )
         }
     }
@@ -87,9 +90,29 @@ class RatesFragment : BaseFragment(), RatesView {
         adapter.notifyDataSetChanged()
     }
 
-    companion object {
-        private val DELAY_MILLLIS = 200L
+    fun scrollToTop() {
+        val layoutManager = binding.ratesViewGroup.layoutManager as LinearLayoutManager?
+        if (layoutManager != null) {
+            binding.ratesViewGroup.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                    if (binding.ratesViewGroup.scrollState == SCROLL_STATE_IDLE) {
+                        if (layoutManager.findFirstVisibleItemPosition() == 0) {
+                            expandAppBarWhenOnScrolledToTop()
+                        }
+                        binding.ratesViewGroup.removeOnScrollListener(this)
+                    }
+                }
+            })
+            if (layoutManager.findFirstVisibleItemPosition() > 1) {
+                binding.ratesViewGroup.smoothScrollToPosition(0)
+            } else {
+                binding.ratesViewGroup.scrollToPosition(0)
+            }
+        }
+    }
 
+    private fun expandAppBarWhenOnScrolledToTop() {
+    }
         fun newInstance(): RatesFragment {
             val fragment = RatesFragment()
             fragment.retainInstance = true
