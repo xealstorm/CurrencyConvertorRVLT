@@ -1,10 +1,12 @@
 package com.android.challengervlt.ui.list.presenter
 
 import com.android.challengervlt.data.CurrencyRepository
+import com.android.challengervlt.data.RateRepository
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.network.NetworkService
 import com.android.challengervlt.util.log.L
 import com.android.challengervlt.ui.list.view.RatesView
+import com.android.challengervlt.util.format.TimeFormatter
 
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -13,12 +15,13 @@ import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
     private val networkService: NetworkService,
-    private val itemsRepository: CurrencyRepository
+    private val itemsRepository: CurrencyRepository,
+    private val rateRepository: RateRepository
 ) : RatesPresenter {
     private var view: RatesView? = null
     private var currentBaseCurrency: String = DEFAULT_BASE_CURRENCY
 
-    private var subscribtion: Disposable? = null
+    private var subscription: Disposable? = null
 
     override fun setView(view: RatesView) {
         this.view = view
@@ -49,12 +52,13 @@ class RatesPresenterImpl(
                 loadRates(baseCurrency)
             }, {
                 L.e(TAG, "Error when getting products", it)
+                //TODO: RVLT243 show snackbar that the internet is unavaliable and empty list
             })
     }
 
     private fun loadRates(baseCurrency: String) {
-        subscribtion?.dispose()
-        subscribtion = networkService.getRates(baseCurrency)
+        subscription?.dispose()
+        subscription = networkService.getRates(baseCurrency)
             .repeatWhen { completed -> completed.delay(1, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -70,6 +74,12 @@ class RatesPresenterImpl(
                                 item.value!!
                             )
                         )
+                        rateRepository.addItem(
+                            item.key!!,
+                            rates.base ?: "",
+                            TimeFormatter.dateDeFormatted(rates.dateString)?.millis ?: 0L,
+                            item.value!!
+                        )
                     }
 
                 }
@@ -82,6 +92,12 @@ class RatesPresenterImpl(
                             DEFAULT_BASE_RATE_VALUE
                         )
                     )
+                    rateRepository.addItem(
+                        rates.base!!,
+                        rates.base!!,
+                        TimeFormatter.dateDeFormatted(rates.dateString)?.millis ?: 0L,
+                        1.0
+                    )
                 }
                 rateItems.toList()
             }
@@ -89,6 +105,7 @@ class RatesPresenterImpl(
                 updateList(it)
             }, {
                 L.e(TAG, "Error when getting products", it)
+                //TODO: RVLT241 & RVLT242 show snackbar that the internet is unavaliable and empty list
             })
     }
 
