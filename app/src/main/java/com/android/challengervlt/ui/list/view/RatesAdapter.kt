@@ -18,6 +18,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     RecyclerView.Adapter<RecyclerView.ViewHolder>(), BaseAdapter<CurrencyItem> {
 
     var clickListener: OnItemClickListener<CurrencyItem>? = null
+    var longClickListener: OnItemClickListener<CurrencyItem>? = null
     var currenciesWithResults: List<String>? = null
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -35,6 +36,10 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
 
         holder.binding.root.setOnClickListener {
             clickListener?.onItemClicked(currencyItem)
+        }
+        holder.binding.root.setOnLongClickListener {
+            longClickListener?.onItemClicked(currencyItem)
+            return@setOnLongClickListener true
         }
         Picasso
             .with(holder.binding.root.context)

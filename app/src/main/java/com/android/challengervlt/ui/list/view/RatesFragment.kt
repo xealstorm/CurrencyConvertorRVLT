@@ -1,9 +1,12 @@
 package com.android.challengervlt.ui.list.view
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.*
@@ -18,6 +21,7 @@ import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
 import com.android.challengervlt.ui.main.view.MainActivity
 import com.android.challengervlt.util.network.InternetConnectivityWatcher
+import com.android.challengervlt.util.ui.showClipboardSnackBar
 import com.android.challengervlt.util.ui.showErrorSnackBar
 import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
@@ -81,6 +85,15 @@ class RatesFragment : BaseFragment(), RatesView {
                 }
             }
         }
+        adapter.longClickListener = object : OnItemClickListener<CurrencyItem> {
+            override fun onItemClicked(item: CurrencyItem) {
+                val clipboard: ClipboardManager? =
+                    getSystemService<ClipboardManager>(context!!, ClipboardManager::class.java)
+                val clip = ClipData.newPlainText(item.code, item.rateValue.toString())
+                clipboard?.setPrimaryClip(clip)
+                activity?.showClipboardSnackBar { offlineSnackbar?.show() }
+            }
+        }
         with(binding.ratesViewGroup) {
             this@RatesFragment.adapter.setHasStableIds(true)
             setHasFixedSize(true)
@@ -102,6 +115,12 @@ class RatesFragment : BaseFragment(), RatesView {
     override fun resetList() {
         adapter.resetList()
         adapter.notifyDataSetChanged()
+    }
+
+    override fun showErrorMessage(errorMessageResId: Int?) {
+        offlineSnackbar =
+            activity?.showErrorSnackBar(R.id.frame_layout,
+                errorMessageResId ?: R.string.undefined_error_message)
     }
 
     fun scrollToTop() {
