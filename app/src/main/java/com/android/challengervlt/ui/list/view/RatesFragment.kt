@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.*
 import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import com.android.challengervlt.R
@@ -16,6 +17,9 @@ import com.android.challengervlt.ui.base.view.BaseFragment
 import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
 import com.android.challengervlt.ui.main.view.MainActivity
+import com.android.challengervlt.util.network.InternetConnectivityWatcher
+import com.android.challengervlt.util.ui.showErrorSnackBar
+import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 
@@ -25,10 +29,22 @@ class RatesFragment : BaseFragment(), RatesView {
     @Inject
     lateinit var adapter: RatesAdapter
     lateinit var binding: FragmentItemsListBinding
+    private var offlineSnackbar: Snackbar? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        InternetConnectivityWatcher(this.activity!!).observe(this,
+            Observer { connected ->
+                if (connected == true) {
+                    offlineSnackbar?.dismiss()
+                    offlineSnackbar = null
+                    adapter.updateClickables()
+                    presenter.loadItems()
+                } else if (connected == false) {
+                    adapter.updateClickables(presenter.getCurrenciesWithResult())
+                }
+            })
     }
 
     override fun onCreateView(

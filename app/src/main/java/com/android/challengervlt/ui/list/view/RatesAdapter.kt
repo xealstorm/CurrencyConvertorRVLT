@@ -18,6 +18,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     RecyclerView.Adapter<RecyclerView.ViewHolder>(), BaseAdapter<CurrencyItem> {
 
     var clickListener: OnItemClickListener<CurrencyItem>? = null
+    var currenciesWithResults: List<String>? = null
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val currencyItem = data[position]
@@ -29,6 +30,9 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
                 currencyItem.rateValue
             )
         holder.binding.currencyName.text = currencyItem.title
+        holder.binding.root.isEnabled =
+            currenciesWithResults == null || currenciesWithResults!!.contains(currencyItem.code)
+
         holder.binding.root.setOnClickListener {
             clickListener?.onItemClicked(currencyItem)
         }
@@ -48,6 +52,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
         val currentPosition = data.indexOf(currencyItem)
         data.swap(currentPosition, 0)
         notifyItemMoved(currentPosition, 0)
+    }
+
+    fun updateClickables(currenciesWithResults: List<String>? = null) {
+        this.currenciesWithResults = currenciesWithResults
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {

@@ -9,4 +9,6 @@ interface RatesPresenter : BasePresenter<RatesView> {
     fun updateList(items: List<CurrencyItem>)
 
     fun loadItems(baseCurrency: String? = null)
+
+    fun getCurrenciesWithResult(): List<String>
 }

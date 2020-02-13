@@ -1,5 +1,6 @@
 package com.android.challengervlt.ui.list.presenter
 
+import com.android.challengervlt.R
 import com.android.challengervlt.data.CurrencyRepository
 import com.android.challengervlt.data.RateRepository
 import com.android.challengervlt.model.CurrencyItem
@@ -11,6 +12,7 @@ import com.android.challengervlt.util.format.TimeFormatter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
@@ -51,8 +53,7 @@ class RatesPresenterImpl(
             .subscribe({
                 loadRates(baseCurrency)
             }, {
-                L.e(TAG, "Error when getting products", it)
-                //TODO: RVLT243 show snackbar that the internet is unavaliable and empty list
+                view?.showErrorMessage(R.string.offline_no_data_message)
             })
     }
 
@@ -63,49 +64,22 @@ class RatesPresenterImpl(
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .map { rates ->
-                val filteredCurrencies = itemsRepository.getItems()
-                val rateItems = mutableListOf<CurrencyItem>()
-                rates.rates?.filter { it.key != null && it.value != null }?.forEach { item ->
-                    if (filteredCurrencies.any { it.code == item.key }) {
-                        rateItems.add(
-                            CurrencyItem(
-                                item.key!!,
-                                filteredCurrencies.first { it.code == item.key }.title,
-                                item.value!!
-                            )
-                        )
-                        rateRepository.addItem(
-                            item.key!!,
-                            rates.base ?: "",
-                            TimeFormatter.dateDeFormatted(rates.dateString)?.millis ?: 0L,
-                            item.value!!
-                        )
-                    }
-
-                }
-                if (rates.base != null) {
-                    rateItems.add(
-                        DEFAULT_BASE_POSITION_IN_LIST,
-                        CurrencyItem(
-                            rates.base!!,
-                            filteredCurrencies.first { it.code == rates.base }.title,
-                            DEFAULT_BASE_RATE_VALUE
-                        )
-                    )
-                    rateRepository.addItem(
-                        rates.base!!,
-                        rates.base!!,
-                        TimeFormatter.dateDeFormatted(rates.dateString)?.millis ?: 0L,
-                        1.0
-                    )
-                }
-                rateItems.toList()
+                saveRates(
+                    rates.base ?: "",
+                    rates.rates,
+                    TimeFormatter.dateDeFormatted(rates.dateString)?.millis ?: 0L
+                )
+                provideCurrencyItems(rates.base ?: "")
             }
             .subscribe({
                 updateList(it)
             }, {
-                L.e(TAG, "Error when getting products", it)
-                //TODO: RVLT241 & RVLT242 show snackbar that the internet is unavaliable and empty list
+                if (it is ConnectException) {
+                    updateList(provideCurrencyItems(currentBaseCurrency))
+                    view?.showErrorMessage(R.string.offline_message)
+                } else {
+                    view?.showErrorMessage(null)
+                }
             })
     }
 
@@ -116,6 +90,61 @@ class RatesPresenterImpl(
             view?.resetList()
         }
     }
+
+    private fun saveRates(base: String, rates: Map<String?, Double?>?, dateTimeInMillis: Long) {
+        val filteredCurrencies = itemsRepository.getItems()
+
+        rates?.filter { it.key != null && it.value != null }?.forEach { item ->
+            if (filteredCurrencies.any { it.code == item.key }) {
+                rateRepository.addItem(
+                    item.key!!,
+                    base,
+                    dateTimeInMillis,
+                    item.value!!
+                )
+            }
+
+        }
+        if (!rates?.filter { it.key != null && it.value != null }.isNullOrEmpty()) {
+            rateRepository.addItem(
+                base,
+                base,
+                dateTimeInMillis,
+                1.0
+            )
+        }
+    }
+
+
+    private fun provideCurrencyItems(base: String): List<CurrencyItem> {
+        val filteredCurrencies = itemsRepository.getItems()
+        val rates = rateRepository.getValuesByBase(base)
+
+        val rateItems = mutableListOf<CurrencyItem>()
+        rates.filterNotNull().forEach { item ->
+            if (filteredCurrencies.any { it.code == item.currency }) {
+                val currencyItem = CurrencyItem(
+                    item.currency,
+                    filteredCurrencies.first { it.code == item.currency }.title,
+                    item.rate
+                )
+                if (currencyItem.code == base) {
+                    rateItems.add(
+                        DEFAULT_BASE_POSITION_IN_LIST, currencyItem
+                    )
+                } else {
+                    rateItems.add(currencyItem)
+                }
+            }
+
+        }
+        return rateItems.toList()
+    }
+
+    override fun getCurrenciesWithResult() = itemsRepository.getItems().filter {
+        !rateRepository.getValuesByBase(it.code).isNullOrEmpty()
+    }.map { it.code }
+
 
     companion object {
         private val TAG = RatesPresenterImpl::class.java.toString()

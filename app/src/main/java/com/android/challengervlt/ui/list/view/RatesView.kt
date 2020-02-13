@@ -6,4 +6,6 @@ interface RatesView {
     fun updateItems(items: List<CurrencyItem>)
 
     fun resetList()
+
+    fun showErrorMessage(errorMessageResId: Int? = null)
 }
