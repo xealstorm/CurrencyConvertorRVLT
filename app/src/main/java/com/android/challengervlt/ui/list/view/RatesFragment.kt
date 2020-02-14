@@ -71,6 +71,11 @@ class RatesFragment : BaseFragment(), RatesView {
         presenter.loadItems()
     }
 
+    override fun onPause() {
+        super.onPause()
+        presenter.pauseUpdates()
+    }
+
     override fun doInjections(activityComponent: ActivityComponent) {
         activityComponent.plus(RatesModule()).injectTo(this)
     }

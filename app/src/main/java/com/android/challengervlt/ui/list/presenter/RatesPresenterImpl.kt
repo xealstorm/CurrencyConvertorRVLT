@@ -64,7 +64,7 @@ class RatesPresenterImpl(
         subscription = networkService.getRates(baseCurrency)
             .repeatWhen { completed -> completed.delay(1, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
-            .observeOn(AndroiSchedulers.mainThread())
+            .observeOn(AndroidSchedulers.mainThread())
             .map { rates ->
                 saveRates(
                     rates.base ?: "",
