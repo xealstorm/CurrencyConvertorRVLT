@@ -3,4 +3,5 @@
     <dimen name="activity_vertical_margin">16dp</dimen>
     <dimen name="item_image_size">40dp</dimen>
     <dimen name="item_height">72dp</dimen>
+    <dimen name="title_margin">72dp</dimen>
 </resources>

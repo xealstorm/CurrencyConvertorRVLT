@@ -5,7 +5,5 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rates_view_group"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingStart="@dimen/activity_horizontal_margin"
-        android:paddingEnd="@dimen/activity_horizontal_margin" />
+        android:layout_height="match_parent" />
 </layout>
