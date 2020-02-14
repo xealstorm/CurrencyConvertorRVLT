@@ -5,4 +5,5 @@
     <string name="undefined_error_message">Undefined error occurred.</string>
     <string name="offline_message">You are currently offline.</string>
     <string name="copied_to_clipboard_message">Copied to clipboard</string>
+    <string name="zero_placeholder">0</string>
 </resources>
