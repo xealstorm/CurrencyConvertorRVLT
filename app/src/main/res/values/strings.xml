@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Rates</string>
-    <string name="rate_format">%.2f</string>
     <string name="offline_no_data_message">Unable to retrieve currencies. Check your internet connection.</string>
     <string name="undefined_error_message">Undefined error occurred.</string>
     <string name="offline_message">You are currently offline.</string>

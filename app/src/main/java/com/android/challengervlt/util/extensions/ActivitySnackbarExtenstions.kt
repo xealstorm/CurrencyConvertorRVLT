@@ -1,4 +1,4 @@
-package com.android.challengervlt.util.ui
+package com.android.challengervlt.util.extensions
 
 import android.app.Activity
 import android.view.View

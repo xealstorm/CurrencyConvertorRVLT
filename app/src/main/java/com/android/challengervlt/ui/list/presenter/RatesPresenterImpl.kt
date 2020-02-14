@@ -15,7 +15,7 @@ import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
     private val networkService: NetworkService,
-    private val itemsRepository: CurrencyRepository,
+    private val currencyRepository: CurrencyRepository,
     private val rateRepository: RateRepository
 ) : RatesPresenter {
     private var view: RatesView? = null
@@ -27,26 +27,32 @@ class RatesPresenterImpl(
         this.view = view
     }
 
+    /**
+     * Loads currencies (if none in database)
+     * Loads currency rates
+     */
     override fun loadItems(baseCurrency: String?) {
         if (baseCurrency != null) {
             currentBaseCurrency = baseCurrency
         }
-        if (itemsRepository.hasAny()) {
+        if (currencyRepository.hasAny()) {
             loadRates(currentBaseCurrency)
         } else {
             loadCurrenciesAndRates(currentBaseCurrency)
         }
     }
 
+    /**
+     * Loads currenices
+     * Saves them to DB
+     * Loads currency rates then
+     */
     private fun loadCurrenciesAndRates(baseCurrency: String) {
         networkService.getCurrencies()
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .map {
-                it.filter { it.key != null && it.value != null }
-                    .forEach {
-                        itemsRepository.addItem(it.key!!, it.value!!)
-                    }
+                saveCurrencies(it)
             }
             .subscribe({
                 loadRates(baseCurrency)
@@ -55,14 +61,20 @@ class RatesPresenterImpl(
             })
     }
 
-    override fun pauseUpdates() {
-        subscription?.dispose()
-    }
-
+    /**
+     * Loads currency rates once per DEFAULT_INTERVAL_IN_SECONDS
+     * Saves them to the DB
+     * Provides CurrencyItems for the UI
+     */
     private fun loadRates(baseCurrency: String) {
         pauseUpdates()
         subscription = networkService.getRates(baseCurrency)
-            .repeatWhen { completed -> completed.delay(1, TimeUnit.SECONDS) }
+            .repeatWhen { completed ->
+                completed.delay(
+                    DEFAULT_INTERVAL_IN_SECONDS,
+                    TimeUnit.SECONDS
+                )
+            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .map { rates ->
@@ -76,10 +88,17 @@ class RatesPresenterImpl(
             .subscribe({
                 updateList(it)
             }, {
+                // if an error occurred the currency items from the DB are provided
+                // the clickable items are provided
+                // an error message is shown
                 updateList(provideCurrencyItems(currentBaseCurrency))
-                view?.updateClickables(getCurrenciesWithResult())
+                view?.updateOfflineCurrencies(getCurrenciesWithResult())
                 view?.showErrorMessage(R.string.offline_message)
             })
+    }
+
+    override fun pauseUpdates() {
+        subscription?.dispose()
     }
 
     override fun updateList(items: List<CurrencyItem>) {
@@ -90,9 +109,28 @@ class RatesPresenterImpl(
         }
     }
 
-    private fun saveRates(base: String, rates: Map<String?, Double?>?, dateTimeInMillis: Long) {
-        val filteredCurrencies = itemsRepository.getItems()
+    override fun getCurrenciesWithResult() = currencyRepository.getItems().filter {
+        !rateRepository.getValuesByBase(it.code).isNullOrEmpty()
+    }.map { it.code }
 
+
+    /**
+     * Saves currencies locally
+     */
+    private fun saveCurrencies(currencies: Map<String?, String?>) {
+        currencies.filter { it.key != null && it.value != null }
+            .forEach {
+                currencyRepository.addItem(it.key!!, it.value!!)
+            }
+    }
+
+    /**
+     * Saves rates locally
+     */
+    private fun saveRates(base: String, rates: Map<String?, Double?>?, dateTimeInMillis: Long) {
+        val filteredCurrencies = currencyRepository.getItems()
+
+        // saving the currency rates (ex. {"AUD", "EUR", timestamp, 1.5601})
         rates?.filter { it.key != null && it.value != null }?.forEach { item ->
             if (filteredCurrencies.any { it.code == item.key }) {
                 rateRepository.addItem(
@@ -104,6 +142,7 @@ class RatesPresenterImpl(
             }
 
         }
+        // saving the base currency rate (ex. {"EUR", "EUR", timestamp, 1.0})
         if (!rates?.filter { it.key != null && it.value != null }.isNullOrEmpty()) {
             rateRepository.addItem(
                 base,
@@ -114,9 +153,11 @@ class RatesPresenterImpl(
         }
     }
 
-
+    /**
+     * Provides a list of currency items (currencies + rates) to be used in the UI
+     */
     private fun provideCurrencyItems(base: String): List<CurrencyItem> {
-        val filteredCurrencies = itemsRepository.getItems()
+        val filteredCurrencies = currencyRepository.getItems()
         val rates = rateRepository.getValuesByBase(base)
 
         val rateItems = mutableListOf<CurrencyItem>()
@@ -140,15 +181,11 @@ class RatesPresenterImpl(
         return rateItems.toList()
     }
 
-    override fun getCurrenciesWithResult() = itemsRepository.getItems().filter {
-        !rateRepository.getValuesByBase(it.code).isNullOrEmpty()
-    }.map { it.code }
-
-
     companion object {
         private val TAG = RatesPresenterImpl::class.java.toString()
         private const val DEFAULT_BASE_CURRENCY = "EUR"
         private const val DEFAULT_BASE_POSITION_IN_LIST = 0
         private const val DEFAULT_BASE_RATE_VALUE = 1.0
+        private const val DEFAULT_INTERVAL_IN_SECONDS = 1L
     }
 }

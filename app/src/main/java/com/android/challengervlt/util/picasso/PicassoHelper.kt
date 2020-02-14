@@ -1,4 +1,4 @@
-package com.android.challengervlt.util.ui
+package com.android.challengervlt.util.picasso
 
 import android.app.Application
 import com.jakewharton.picasso.OkHttp3Downloader
@@ -19,7 +19,9 @@ object PicassoHelper {
                             .apply {
                                 cache(
                                     Cache(
-                                        File(app.cacheDir, CACHE_FILE_NAME),
+                                        File(app.cacheDir,
+                                            CACHE_FILE_NAME
+                                        ),
                                         CACHE_MAX_SIZE
                                     )
                                 )

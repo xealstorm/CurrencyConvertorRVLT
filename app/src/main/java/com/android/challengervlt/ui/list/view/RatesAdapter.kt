@@ -5,15 +5,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
-import com.android.challengecoup.util.ui.CircleTransform
 import com.android.challengervlt.BuildConfig
-import com.android.challengervlt.R
 import com.android.challengervlt.databinding.RowItemBinding
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseAdapter
 import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.util.format.DoubleFormatter
 import com.android.challengervlt.util.log.L
+import com.android.challengervlt.util.picasso.CircleTransform
 import com.jakewharton.rxbinding2.widget.RxTextView
 import com.squareup.picasso.Picasso
 import io.reactivex.Observable
@@ -23,8 +22,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
 
     var clickListener: OnItemClickListener<CurrencyItem>? = null
     var longClickListener: OnItemClickListener<CurrencyItem>? = null
-    var currenciesWithResults: List<String>? = null
-    var inputBaseValue: Double = 1.0
+    private var offlineCurrencies: List<String>? = null
+    /**
+     * The input of a user. All rates should be multiplied by this field when shown in UI.
+     */
+    private var inputBaseValue: Double = 1.0
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val currencyItem = data[position]
@@ -34,17 +36,20 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
             if (inputBaseValue != 0.0) {
                 DoubleFormatter.doubleFormatted(inputBaseValue * currencyItem.rateValue)
             } else {
-                ""
+                "" // in order to show a placeholder when the result equals to zero – return empty string
             }
         )
-
+        // input field is enabled only for the first element
         holder.binding.valueInput.isEnabled = position == 0
+
         if (holder.binding.valueInput.isEnabled) {
             holder.binding.valueInput.requestFocus()
+            // move the cursor to the end
             holder.binding.valueInput.setSelection(holder.binding.valueInput.length())
         }
 
-        holder.nameObservable
+        // if the field is changed and it's the top one - the inputBaseValue should be changed
+        holder.valueInputTextChangeObservable
             .subscribe {
                 if (data.indexOf(currencyItem) == 0) {
                     try {
@@ -64,13 +69,14 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
 
         holder.binding.currencyName.text = currencyItem.title
         holder.binding.root.isEnabled =
-            currenciesWithResults == null || currenciesWithResults!!.contains(currencyItem.code)
+            offlineCurrencies == null || offlineCurrencies!!.contains(currencyItem.code)
 
         holder.binding.root.setOnClickListener {
             currencyItem.inputValue = holder.binding.valueInput.text.toString().toDouble()
             clickListener?.onItemClicked(currencyItem)
         }
         holder.binding.root.setOnLongClickListener {
+            currencyItem.inputValue = holder.binding.valueInput.text.toString().toDouble()
             longClickListener?.onItemClicked(currencyItem)
             return@setOnLongClickListener true
         }
@@ -86,6 +92,9 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
             .into(holder.binding.currencyIcon)
     }
 
+    /**
+     * Moves the current currencyItem to the top of the list
+     */
     fun swapOnClick(currencyItem: CurrencyItem) {
         inputBaseValue = currencyItem.inputValue
         val currentPosition = data.indexOf(currencyItem)
@@ -93,8 +102,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
         notifyItemMoved(currentPosition, 0)
     }
 
-    fun updateClickables(currenciesWithResults: List<String>? = null) {
-        this.currenciesWithResults = currenciesWithResults
+    /**
+     * Sets the list of currency codes that are able to be base currencies in offline mode
+     */
+    fun updateOfflineCurrencies(currenciesWithResults: List<String>? = null) {
+        this.offlineCurrencies = currenciesWithResults
         notifyDataSetChanged()
     }
 
@@ -115,7 +127,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     }
 
     override fun getItemId(position: Int): Long {
-        return data.get(position).code.hashCode().toLong()
+        return data[position].code.hashCode().toLong()
     }
 
     private fun addOrUpdate(model: CurrencyItem) {
@@ -129,7 +141,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
         }
     }
 
-    inline fun <reified T> MutableList<T>.swap(sourceIndex: Int, destinationIndex: Int) {
+    private inline fun <reified T> MutableList<T>.swap(sourceIndex: Int, destinationIndex: Int) {
         if (sourceIndex != destinationIndex && sourceIndex >= 0 && destinationIndex >= 0
             && sourceIndex < this.size && destinationIndex < this.size
         ) {
@@ -147,7 +159,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val binding: RowItemBinding = DataBindingUtil.bind(itemView)!!
 
-        val nameObservable: Observable<String> = RxTextView.textChanges(binding.valueInput)
+        val valueInputTextChangeObservable: Observable<String> = RxTextView.textChanges(binding.valueInput)
             .map {
                 it.toString()
             }

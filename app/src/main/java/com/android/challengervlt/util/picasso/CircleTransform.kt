@@ -1,7 +1,7 @@
-package com.android.challengecoup.util.ui
+package com.android.challengervlt.util.picasso
 
 import android.graphics.*
-import com.squareup.picasso.Transformation;
+import com.squareup.picasso.Transformation
 
 // This class has been written outside of the challenge and being just reused here
 class CircleTransform : Transformation {
@@ -24,8 +24,8 @@ class CircleTransform : Transformation {
             squaredBitmap,
             Shader.TileMode.CLAMP, Shader.TileMode.CLAMP
         )
-        paint.setShader(shader)
-        paint.setAntiAlias(true)
+        paint.shader = shader
+        paint.isAntiAlias = true
 
         val r = size / 2f
         canvas.drawCircle(r, r, r, paint)

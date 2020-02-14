@@ -21,8 +21,8 @@ import com.android.challengervlt.ui.base.view.OnItemClickListener
 import com.android.challengervlt.ui.list.presenter.RatesPresenter
 import com.android.challengervlt.ui.main.view.MainActivity
 import com.android.challengervlt.util.network.InternetConnectivityWatcher
-import com.android.challengervlt.util.ui.showClipboardSnackBar
-import com.android.challengervlt.util.ui.showErrorSnackBar
+import com.android.challengervlt.util.extensions.showClipboardSnackBar
+import com.android.challengervlt.util.extensions.showErrorSnackBar
 import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
@@ -40,14 +40,7 @@ class RatesFragment : BaseFragment(), RatesView {
         setHasOptionsMenu(true)
         InternetConnectivityWatcher(this.activity!!).observe(this,
             Observer { connected ->
-                if (connected == true) {
-                    offlineSnackbar?.dismiss()
-                    offlineSnackbar = null
-                    updateClickables()
-                    presenter.loadItems()
-                } else if (connected == false) {
-                    updateClickables(presenter.getCurrenciesWithResult())
-                }
+                handleConnectionChanged(connected)
             })
     }
 
@@ -84,27 +77,20 @@ class RatesFragment : BaseFragment(), RatesView {
         adapter.clickListener = object : OnItemClickListener<CurrencyItem> {
             override fun onItemClicked(item: CurrencyItem) {
                 if (binding.ratesViewGroup.layoutManager?.isSmoothScrolling == false) {
-                    presenter.pauseUpdates()
-                    adapter.swapOnClick(item)
-                    scrollToTop()
-                    presenter.loadItems(item.code)
+                    handleItemClick(item)
                 }
             }
         }
         adapter.longClickListener = object : OnItemClickListener<CurrencyItem> {
             override fun onItemClicked(item: CurrencyItem) {
-                val clipboard: ClipboardManager? =
-                    getSystemService<ClipboardManager>(context!!, ClipboardManager::class.java)
-                val clip = ClipData.newPlainText(item.code, item.rateValue.toString())
-                clipboard?.setPrimaryClip(clip)
-                activity?.showClipboardSnackBar { offlineSnackbar?.show() }
+                handleItemLongClick(item)
             }
         }
         with(binding.ratesViewGroup) {
             this@RatesFragment.adapter.setHasStableIds(true)
             setHasFixedSize(true)
             val itemAnimator = DefaultItemAnimator()
-            itemAnimator.supportsChangeAnimations = false
+            itemAnimator.supportsChangeAnimations = false // to prevent the list from blinking
             this.itemAnimator = itemAnimator
             layoutManager = LinearLayoutManager(activity)
             adapter = this@RatesFragment.adapter
@@ -125,15 +111,21 @@ class RatesFragment : BaseFragment(), RatesView {
 
     override fun showErrorMessage(errorMessageResId: Int?) {
         offlineSnackbar =
-            activity?.showErrorSnackBar(R.id.frame_layout,
-                errorMessageResId ?: R.string.undefined_error_message)
+            activity?.showErrorSnackBar(
+                R.id.frame_layout,
+                errorMessageResId ?: R.string.undefined_error_message
+            )
     }
 
-    override fun updateClickables(currenciesWithResults: List<String>?){
-        adapter.updateClickables(currenciesWithResults)
+    override fun updateOfflineCurrencies(currenciesWithResults: List<String>?) {
+        adapter.updateOfflineCurrencies(currenciesWithResults)
     }
 
-    fun scrollToTop() {
+    /**
+     * Makes the recycler view scroll to top
+     * Expands the app bar if needed
+     */
+    private fun scrollToTop() {
         val layoutManager = binding.ratesViewGroup.layoutManager as LinearLayoutManager?
         if (layoutManager != null) {
             binding.ratesViewGroup.addOnScrollListener(object : RecyclerView.OnScrollListener() {
@@ -146,6 +138,7 @@ class RatesFragment : BaseFragment(), RatesView {
                     }
                 }
             })
+            // if we are on the top of the page – no need to scroll smoothly
             if (layoutManager.findFirstVisibleItemPosition() > 1) {
                 binding.ratesViewGroup.smoothScrollToPosition(0)
             } else {
@@ -156,6 +149,40 @@ class RatesFragment : BaseFragment(), RatesView {
 
     private fun expandAppBarWhenOnScrolledToTop() {
         (activity as MainActivity?)?.expandAppBar()
+    }
+
+    private fun handleConnectionChanged(isConnected: Boolean?) {
+        if (isConnected == true) {
+            // remove the snackbar
+            offlineSnackbar?.dismiss()
+            offlineSnackbar = null
+            // make all items clickable
+            updateOfflineCurrencies()
+            // update currency rates
+            presenter.loadItems()
+        } else if (isConnected == false) {
+            // set up the clickable items
+            updateOfflineCurrencies(presenter.getCurrenciesWithResult())
+        }
+    }
+
+    private fun handleItemClick(currencyItem: CurrencyItem) {
+        presenter.pauseUpdates()
+        adapter.swapOnClick(currencyItem)
+        scrollToTop()
+        presenter.loadItems(currencyItem.code)
+    }
+
+    private fun handleItemLongClick(currencyItem: CurrencyItem) {
+        // copy to clipboard
+        val clipboard: ClipboardManager? =
+            getSystemService<ClipboardManager>(context!!, ClipboardManager::class.java)
+        val clip = ClipData.newPlainText(currencyItem.code, currencyItem.inputValue.toString())
+        clipboard?.setPrimaryClip(clip)
+        // notify with the snackbar
+        // if we are offline – show offline snackbar again afterwards
+        activity?.showClipboardSnackBar { offlineSnackbar?.show() }
+
     }
 
     companion object {

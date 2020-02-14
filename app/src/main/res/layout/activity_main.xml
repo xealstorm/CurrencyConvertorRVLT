@@ -15,11 +15,11 @@
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@id/toolbar"
-                app:titleMarginStart="@dimen/title_margin"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
                 app:layout_scrollFlags="scroll|enterAlways"
-                app:title="@string/app_name"/>
+                app:title="@string/app_name"
+                app:titleMarginStart="@dimen/title_margin" />
         </com.google.android.material.appbar.AppBarLayout>
 
         <FrameLayout

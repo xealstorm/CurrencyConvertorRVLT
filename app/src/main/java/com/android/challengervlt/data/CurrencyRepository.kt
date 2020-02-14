@@ -4,7 +4,7 @@ interface CurrencyRepository {
     fun addItem(
         code: String,
         title: String
-        )
+    )
 
     fun getItems(): List<CurrencyDao>
 

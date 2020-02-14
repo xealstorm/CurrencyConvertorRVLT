@@ -9,11 +9,10 @@ class RateRepositoryImpl(private val realm: Realm) : RateRepository {
         baseCurrencyCode: String,
         date: Long,
         value: Double
-    ) {
-        realm.executeTransaction {
-            it.insertOrUpdate(RateDao(currencyCode, baseCurrencyCode, date, value))
-        }
+    ) = realm.executeTransaction {
+        it.insertOrUpdate(RateDao(currencyCode, baseCurrencyCode, date, value))
     }
+
 
     override fun getValuesByBase(base: String): List<RateDao?> =
         realm.where(RateDao::class.java)
