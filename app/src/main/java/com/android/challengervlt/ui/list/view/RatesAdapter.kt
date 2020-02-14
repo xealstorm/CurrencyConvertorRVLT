@@ -12,6 +12,7 @@ import com.android.challengervlt.databinding.RowItemBinding
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseAdapter
 import com.android.challengervlt.ui.base.view.OnItemClickListener
+import com.android.challengervlt.util.format.DoubleFormatter
 import com.android.challengervlt.util.log.L
 import com.jakewharton.rxbinding2.widget.RxTextView
 import com.squareup.picasso.Picasso
@@ -30,10 +31,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
 
         (holder as ItemViewHolder).binding.currencyCode.text = currencyItem.code
         holder.binding.valueInput.setText(
-            String.format(
-                holder.binding.root.context.getString(R.string.rate_format),
-                inputBaseValue * currencyItem.rateValue
-            )
+            if (inputBaseValue != 0.0) {
+                DoubleFormatter.doubleFormatted(inputBaseValue * currencyItem.rateValue)
+            } else {
+                ""
+            }
         )
 
         holder.binding.valueInput.isEnabled = position == 0
@@ -46,7 +48,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
             .subscribe {
                 if (data.indexOf(currencyItem) == 0) {
                     try {
-                        inputBaseValue = it.toDouble()
+                        inputBaseValue = if (it.isEmpty()) {
+                            0.0
+                        } else {
+                            it.toDouble()
+                        }
                         notifyItemRangeChanged(1, itemCount - 1)
                     } catch (e: NumberFormatException) {
                         L.e("The input format cannot be converted into a double", e)
