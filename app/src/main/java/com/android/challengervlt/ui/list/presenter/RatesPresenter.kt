@@ -11,4 +11,6 @@ interface RatesPresenter : BasePresenter<RatesView> {
     fun loadItems(baseCurrency: String? = null)
 
     fun getCurrenciesWithResult(): List<String>
+
+    fun pauseUpdates()
 }

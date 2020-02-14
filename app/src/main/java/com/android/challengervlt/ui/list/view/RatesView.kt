@@ -8,4 +8,6 @@ interface RatesView {
     fun resetList()
 
     fun showErrorMessage(errorMessageResId: Int? = null)
+
+    fun updateClickables(currenciesWithResults: List<String>? = null)
 }

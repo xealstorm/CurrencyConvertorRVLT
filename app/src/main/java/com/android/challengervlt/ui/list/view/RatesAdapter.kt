@@ -12,7 +12,10 @@ import com.android.challengervlt.databinding.RowItemBinding
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.ui.base.view.BaseAdapter
 import com.android.challengervlt.ui.base.view.OnItemClickListener
+import com.android.challengervlt.util.log.L
+import com.jakewharton.rxbinding2.widget.RxTextView
 import com.squareup.picasso.Picasso
+import io.reactivex.Observable
 
 class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<CurrencyItem>()) :
     RecyclerView.Adapter<RecyclerView.ViewHolder>(), BaseAdapter<CurrencyItem> {
@@ -20,21 +23,45 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     var clickListener: OnItemClickListener<CurrencyItem>? = null
     var longClickListener: OnItemClickListener<CurrencyItem>? = null
     var currenciesWithResults: List<String>? = null
+    var inputBaseValue: Double = 1.0
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val currencyItem = data[position]
 
         (holder as ItemViewHolder).binding.currencyCode.text = currencyItem.code
-        holder.binding.valueInput.text =
+        holder.binding.valueInput.setText(
             String.format(
                 holder.binding.root.context.getString(R.string.rate_format),
-                currencyItem.rateValue
+                inputBaseValue * currencyItem.rateValue
             )
+        )
+
+        holder.binding.valueInput.isEnabled = position == 0
+        if (holder.binding.valueInput.isEnabled) {
+            holder.binding.valueInput.requestFocus()
+            holder.binding.valueInput.setSelection(holder.binding.valueInput.length())
+        }
+
+        holder.nameObservable
+            .subscribe {
+                if (data.indexOf(currencyItem) == 0) {
+                    try {
+                        inputBaseValue = it.toDouble()
+                        notifyItemRangeChanged(1, itemCount - 1)
+                    } catch (e: NumberFormatException) {
+                        L.e("The input format cannot be converted into a double", e)
+                    } catch (e: IllegalStateException) {
+                        L.e("The item range cannot be updated right now", e)
+                    }
+                }
+            }
+
         holder.binding.currencyName.text = currencyItem.title
         holder.binding.root.isEnabled =
             currenciesWithResults == null || currenciesWithResults!!.contains(currencyItem.code)
 
         holder.binding.root.setOnClickListener {
+            currencyItem.inputValue = holder.binding.valueInput.text.toString().toDouble()
             clickListener?.onItemClicked(currencyItem)
         }
         holder.binding.root.setOnLongClickListener {
@@ -54,6 +81,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     }
 
     fun swapOnClick(currencyItem: CurrencyItem) {
+        inputBaseValue = currencyItem.inputValue
         val currentPosition = data.indexOf(currencyItem)
         data.swap(currentPosition, 0)
         notifyItemMoved(currentPosition, 0)
@@ -112,6 +140,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
 
     class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val binding: RowItemBinding = DataBindingUtil.bind(itemView)!!
+
+        val nameObservable: Observable<String> = RxTextView.textChanges(binding.valueInput)
+            .map {
+                it.toString()
+            }
     }
 }
 

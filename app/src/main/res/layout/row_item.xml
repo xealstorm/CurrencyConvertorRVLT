@@ -43,10 +43,12 @@
             app:layout_constraintTop_toBottomOf="@+id/currency_code"
             tools:text="US Dollar" />
 
-        <TextView
+        <EditText
             android:id="@+id/value_input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:inputType="number|numberDecimal"
+            android:maxLength="10"
             android:textAlignment="textEnd"
             android:textColor="@android:color/black"
             android:textSize="16sp"

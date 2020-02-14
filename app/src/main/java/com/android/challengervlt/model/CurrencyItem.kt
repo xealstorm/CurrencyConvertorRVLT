@@ -6,5 +6,5 @@ data class CurrencyItem(
     var rateValue: Double
 ) {
     val countryCode = code.substring(0, 2)
-
+    var inputValue: Double = 1.0
 }

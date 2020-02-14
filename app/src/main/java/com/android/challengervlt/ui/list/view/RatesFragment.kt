@@ -43,10 +43,10 @@ class RatesFragment : BaseFragment(), RatesView {
                 if (connected == true) {
                     offlineSnackbar?.dismiss()
                     offlineSnackbar = null
-                    adapter.updateClickables()
+                    updateClickables()
                     presenter.loadItems()
                 } else if (connected == false) {
-                    adapter.updateClickables(presenter.getCurrenciesWithResult())
+                    updateClickables(presenter.getCurrenciesWithResult())
                 }
             })
     }
@@ -79,6 +79,7 @@ class RatesFragment : BaseFragment(), RatesView {
         adapter.clickListener = object : OnItemClickListener<CurrencyItem> {
             override fun onItemClicked(item: CurrencyItem) {
                 if (binding.ratesViewGroup.layoutManager?.isSmoothScrolling == false) {
+                    presenter.pauseUpdates()
                     adapter.swapOnClick(item)
                     scrollToTop()
                     presenter.loadItems(item.code)
@@ -121,6 +122,10 @@ class RatesFragment : BaseFragment(), RatesView {
         offlineSnackbar =
             activity?.showErrorSnackBar(R.id.frame_layout,
                 errorMessageResId ?: R.string.undefined_error_message)
+    }
+
+    override fun updateClickables(currenciesWithResults: List<String>?){
+        adapter.updateClickables(currenciesWithResults)
     }
 
     fun scrollToTop() {

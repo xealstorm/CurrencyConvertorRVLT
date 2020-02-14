@@ -5,14 +5,12 @@ import com.android.challengervlt.data.CurrencyRepository
 import com.android.challengervlt.data.RateRepository
 import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.network.NetworkService
-import com.android.challengervlt.util.log.L
 import com.android.challengervlt.ui.list.view.RatesView
 import com.android.challengervlt.util.format.TimeFormatter
 
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import java.net.ConnectException
 import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
@@ -57,12 +55,16 @@ class RatesPresenterImpl(
             })
     }
 
-    private fun loadRates(baseCurrency: String) {
+    override fun pauseUpdates() {
         subscription?.dispose()
+    }
+
+    private fun loadRates(baseCurrency: String) {
+        pauseUpdates()
         subscription = networkService.getRates(baseCurrency)
             .repeatWhen { completed -> completed.delay(1, TimeUnit.SECONDS) }
             .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(AndroiSchedulers.mainThread())
             .map { rates ->
                 saveRates(
                     rates.base ?: "",
@@ -74,12 +76,9 @@ class RatesPresenterImpl(
             .subscribe({
                 updateList(it)
             }, {
-                if (it is ConnectException) {
-                    updateList(provideCurrencyItems(currentBaseCurrency))
-                    view?.showErrorMessage(R.string.offline_message)
-                } else {
-                    view?.showErrorMessage(null)
-                }
+                updateList(provideCurrencyItems(currentBaseCurrency))
+                view?.updateClickables(getCurrenciesWithResult())
+                view?.showErrorMessage(R.string.offline_message)
             })
     }
 
@@ -110,7 +109,7 @@ class RatesPresenterImpl(
                 base,
                 base,
                 dateTimeInMillis,
-                1.0
+                DEFAULT_BASE_RATE_VALUE
             )
         }
     }
