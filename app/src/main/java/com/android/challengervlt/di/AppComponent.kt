@@ -4,6 +4,7 @@ import com.android.challengervlt.App
 import com.android.challengervlt.data.CurrencyRepository
 import com.android.challengervlt.data.RateRepository
 import com.android.challengervlt.network.NetworkService
+import com.android.challengervlt.util.scedulers.AppSchedulerProvider
 import dagger.Component
 import javax.inject.Singleton
 
@@ -19,6 +20,8 @@ interface AppComponent {
     fun provideCurrencyRepository(): CurrencyRepository
 
     fun provideRatesRepository(): RateRepository
+
+    fun schedulerProvider(): AppSchedulerProvider
 
     fun inject(application: App)
 }

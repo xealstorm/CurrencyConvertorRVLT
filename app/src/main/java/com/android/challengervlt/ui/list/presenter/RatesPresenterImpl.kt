@@ -1,5 +1,6 @@
 package com.android.challengervlt.ui.list.presenter
 
+import androidx.annotation.VisibleForTesting
 import com.android.challengervlt.R
 import com.android.challengervlt.data.CurrencyRepository
 import com.android.challengervlt.data.RateRepository
@@ -7,16 +8,16 @@ import com.android.challengervlt.model.CurrencyItem
 import com.android.challengervlt.network.NetworkService
 import com.android.challengervlt.ui.list.view.RatesView
 import com.android.challengervlt.util.format.TimeFormatter
+import com.android.challengervlt.util.scedulers.SchedulerProvider
 
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import java.util.concurrent.TimeUnit
 
 class RatesPresenterImpl(
     private val networkService: NetworkService,
     private val currencyRepository: CurrencyRepository,
-    private val rateRepository: RateRepository
+    private val rateRepository: RateRepository,
+    private val schedulerProvider: SchedulerProvider
 ) : RatesPresenter {
     private var view: RatesView? = null
     private var currentBaseCurrency: String = DEFAULT_BASE_CURRENCY
@@ -47,10 +48,11 @@ class RatesPresenterImpl(
      * Saves them to DB
      * Loads currency rates then
      */
-    private fun loadCurrenciesAndRates(baseCurrency: String) {
+    @VisibleForTesting
+    internal fun loadCurrenciesAndRates(baseCurrency: String) {
         networkService.getCurrencies()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(schedulerProvider.io())
+            .observeOn(schedulerProvider.ui())
             .map {
                 saveCurrencies(it)
             }
@@ -66,7 +68,8 @@ class RatesPresenterImpl(
      * Saves them to the DB
      * Provides CurrencyItems for the UI
      */
-    private fun loadRates(baseCurrency: String) {
+    @VisibleForTesting
+    internal fun loadRates(baseCurrency: String) {
         pauseUpdates()
         subscription = networkService.getRates(baseCurrency)
             .repeatWhen { completed ->
@@ -75,8 +78,8 @@ class RatesPresenterImpl(
                     TimeUnit.SECONDS
                 )
             }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(schedulerProvider.io())
+            .observeOn(schedulerProvider.ui())
             .map { rates ->
                 saveRates(
                     rates.base ?: "",
@@ -180,6 +183,9 @@ class RatesPresenterImpl(
         }
         return rateItems.toList()
     }
+
+    @VisibleForTesting
+    internal fun getView(): RatesView? = view
 
     companion object {
         private val TAG = RatesPresenterImpl::class.java.toString()
