@@ -159,10 +159,11 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
     class ItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val binding: RowItemBinding = DataBindingUtil.bind(itemView)!!
 
-        val valueInputTextChangeObservable: Observable<String> = RxTextView.textChanges(binding.valueInput)
-            .map {
-                it.toString()
-            }
+        val valueInputTextChangeObservable: Observable<String> =
+            RxTextView.textChanges(binding.valueInput)
+                .map {
+                    it.toString()
+                }
     }
 }
 
