@@ -44,7 +44,7 @@ RVLT170. In the offline mode indicate that the item is disabled.
 ### 14th February 2020
 RVLT270. Stop updating when going to background. Resume updating when going to foreground. 
 
-## Project description.
+## Project description
 
 ### Libraries 
 
@@ -62,7 +62,7 @@ the adapter for the RecyclerView in the RatesFragment.
   
 The app uses **Picasso** as an image processing engine. For transforming the images to be of a circle shape a CircleTransform class is used.  
   
-For handling the http request the Retrofit library is used.  
+For handling the http request the **Retrofit** library is used.  
 For background work the **RxJava2** is used.  
 
 ### Reused utilities
@@ -109,7 +109,7 @@ If a user is offline, they see a constant snackbar indicating that the app is of
   
 Also it may be the case that a user has previously switched to some other currencies so their rates are stored locally. In this case when the app goes offline – we get the list of all the currencies which can be used offline and update the list accordingly. So the user is free to switch between “offline” currencies and is informed which currencies are unavailable to switch to.  
   
-Also when a user long clicks the item - the “clipboard” message is shown instead of the “offline” message. However afterwards the “offline” message is back so that the user is still informed they are offline.  
+Also when a user long clicks the item – the “clipboard” message is shown instead of the “offline” message. However afterwards the “offline” message is back so that the user is still informed they are offline.  
   
 Once the app is back to online the list is coloured back to normal and the “offline” message is gone.
 

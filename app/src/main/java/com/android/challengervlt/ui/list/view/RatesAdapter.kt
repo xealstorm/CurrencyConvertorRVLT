@@ -51,7 +51,7 @@ class RatesAdapter(private val data: MutableList<CurrencyItem> = arrayListOf<Cur
         // if the field is changed and it's the top one - the inputBaseValue should be changed
         holder.valueInputTextChangeObservable
             .subscribe {
-                if (data.indexOf(currencyItem) == 0) {
+                if (data.indexOfFirst { item -> item.code == holder.binding.currencyCode.text.toString() } == 0) {
                     try {
                         inputBaseValue = if (it.isEmpty()) {
                             0.0
