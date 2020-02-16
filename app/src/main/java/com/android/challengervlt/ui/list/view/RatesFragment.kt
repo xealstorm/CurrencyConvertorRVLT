@@ -10,7 +10,6 @@ import androidx.core.content.ContextCompat.getSystemService
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.*
-import androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE
 import com.android.challengervlt.R
 import com.android.challengervlt.databinding.FragmentItemsListBinding
 import com.android.challengervlt.di.ActivityComponent
@@ -126,20 +125,12 @@ class RatesFragment : BaseFragment(), RatesView {
      * Expands the app bar if needed
      */
     private fun scrollToTop() {
+        val positionToStartSmoothScroll = 9
         val layoutManager = binding.ratesViewGroup.layoutManager as LinearLayoutManager?
         if (layoutManager != null) {
-            binding.ratesViewGroup.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (binding.ratesViewGroup.scrollState == SCROLL_STATE_IDLE) {
-                        if (layoutManager.findFirstVisibleItemPosition() == 0) {
-                            expandAppBarWhenOnScrolledToTop()
-                        }
-                        binding.ratesViewGroup.removeOnScrollListener(this)
-                    }
-                }
-            })
             // if we are on the top of the page – no need to scroll smoothly
-            if (layoutManager.findFirstVisibleItemPosition() > 1) {
+            if (layoutManager.findFirstVisibleItemPosition() > positionToStartSmoothScroll) {
+                binding.ratesViewGroup.scrollToPosition(positionToStartSmoothScroll)
                 binding.ratesViewGroup.smoothScrollToPosition(0)
             } else {
                 binding.ratesViewGroup.scrollToPosition(0)
